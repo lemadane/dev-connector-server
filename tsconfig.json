@@ -1,0 +1,17 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "module":"CommonJS",
+        "outDir": "dist",
+        "pretty": true,
+        "strict": true,
+        "rootDir": "src",
+        "target":"ESNext",   
+    },
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
