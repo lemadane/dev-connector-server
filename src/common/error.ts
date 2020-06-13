@@ -23,24 +23,20 @@ export class ApiError extends ExtendableError {
 
   tag?: object;
 
-  prettyStack: Trace[] | undefined;
-
   constructor(inputs: ErrorInputs) {
     super(inputs.message);
     this.name = this.constructor.name;
     this.status = inputs.status || this.status;
     this.title = inputs.title || this.title;
-    this.message = inputs?.error?.message || inputs.message || this.message;
+    this.message = inputs.error?.message || inputs.message || this.message;
     this.tip = inputs.tip || this.tip;
     this.tag = inputs.tag || this.tag;
     this.lang = inputs.lang || this.lang;
     this.stack = inputs?.error?.stack || this.stack;
-    this.prettyStack = ApiError.parseStack(this.stack);
   }
 
-  send(res: Response) {
-    logErr(ApiError.info(this));
-    res.status(this.status || INTERNAL_SERVER_ERROR).send({
+  async send(res: Response) {
+    res.status(this.status).send({
       name: this.name,
       title: this.title,
       message: this.message,
@@ -49,49 +45,57 @@ export class ApiError extends ExtendableError {
     });
   }
 
-  static info(error: Error) {
-    return {
-      message: error.message,
-      stackTrace: ApiError.parseStack(error.stack),
-    };
+  static async parseStack(stackTrace: string | undefined): Promise<Trace[] | undefined> {
+    return new Promise(
+      async (resolve: () => void) => {
+        const result: Trace[] = [];
+        if (stackTrace) {
+          const lines = stackTrace?.split('\n')?.slice(1, stackTrace.length);
+          lines.forEach((line) => {
+            line = line?.trim();
+            if (line) {
+              if ((line?.startsWith('at'))) {
+                line = line.replace('at', '');
+                line = line.trim();
+                if (line?.includes('(')) {
+                  line = line.replace(' (', ':');
+                  line = line.replace(')', '');
+                  const parts = line.split(':');
+                  result.push({
+                    within: parts[0]?.trim(),
+                    file: parts[1]?.trim(),
+                    line: parseInt(parts[2]?.trim()),
+                    column: parseInt(parts[3]?.trim()),
+                  });
+                } else {
+                  const parts = line.split(':');
+                  result.push({
+                    file: parts[0]?.trim(),
+                    line: parseInt(parts[1]?.trim()),
+                    column: parseInt(parts[2]?.trim()),
+                  });
+                }
+              }
+            }
+          });
+        }
+        return undefined;
+      }
+    );
   }
 
-  static parseStack = (stackTrace: string | undefined): Trace[] | undefined => {
-    const result: Trace[] = [];
-    if (stackTrace) {
-      const lines = stackTrace?.split('\n')?.slice(1, stackTrace.length);
-      lines.forEach((line) => {
-        line = line?.trim();
-        if (line) {
-          if ((line?.startsWith('at'))) {
-            line = line.replace('at', '');
-            line = line.trim();
-            if (line?.includes('(')) {
-              line = line.replace(' (', ':');
-              line = line.replace(')', '');
-              const parts = line.split(':');
-              result.push({
-                within: parts[0]?.trim(),
-                file: parts[1]?.trim(),
-                line: parseInt(parts[2]?.trim()),
-                column: parseInt(parts[3]?.trim()),
-              });
-            } else {
-              const parts = line.split(':');
-              result.push({
-                file: parts[0]?.trim(),
-                line: parseInt(parts[1]?.trim()),
-                column: parseInt(parts[2]?.trim()),
-              });
-            }
-          }
-        }
-      });
-    }
-    return undefined;
-  };
+  static async info(error: Error) {
+    return {
+      message: error.message,
+      stackTrace: await ApiError.parseStack(error.stack),
+    };
+  }
 }
 
+export async function sendError(error: any, response: Response) {
+  const err = !!error.status ? error as ApiError : new ApiError(error); 
+  return err.send(response);
+}
 
 export class BadRequest extends ApiError {
   status = http.BAD_REQUEST;

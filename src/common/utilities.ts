@@ -1,4 +1,4 @@
-import { hash, genSalt } from 'bcryptjs';
+import { hash, genSalt, compare } from 'bcryptjs';
 import * as gravatar from 'gravatar';
 import * as jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
@@ -10,6 +10,12 @@ export async function getPassword(password: string) {
     const salt = await genSalt(ROUNDS);
     return await hash(password, salt);
 }
+
+export async function validatePassword(password: string, userPassword: string) {
+    return await compare(password, userPassword);
+}
+
+
 
 export async function getAvatar(email: string) {
     return Promise.resolve(gravatar.url(email, { s: '200', r: 'pg', d: 'mm' }));

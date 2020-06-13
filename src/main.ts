@@ -43,5 +43,5 @@ process.on('unhandledRejection', async (err: any) => {
 });
 
 process.on('warning', async (warning) => {
-    logErr('warning', warning.message);
+    logErr('warning', ApiError.info(warning));
 });

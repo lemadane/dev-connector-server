@@ -12,6 +12,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/normalize-url": "^4.2.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
@@ -25,6 +26,7 @@
     "lodash": "^4.17.15",
     "mongoose": "^5.9.10",
     "morgan-body": "^2.4.13",
+    "normalize-url": "^5.0.0",
     "request": "^2.88.2",
     "ts-error": "^1.0.4"
   },

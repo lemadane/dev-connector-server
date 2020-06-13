@@ -1,20 +1,20 @@
 import { Router, Request, Response } from 'express';
 import { check, validationResult } from 'express-validator';
-import UserModel from '../models/user.model';
+import { UserModel } from '../models/user.model';
 
 import { getAccessToken } from '../common/utilities';
 import { getPassword, getAvatar } from '../common/utilities';
-import { OK } from '../common/http-status';
-import { Conflict, ValidationFailure } from '../common/error';
+import { OK, CREATED } from '../common/http-status';
+import { Conflict, ValidationFailure, sendError } from '../common/error';
 
-const userRoutes = Router();
+const routes = Router();
 
-userRoutes.get('/',
+routes.get('/',
     async (_, res: Response) => {
-        return res.status(OK).send({ message: 'It works' });
+        return res.json({ message: 'It works' });
     });
 
-userRoutes.post(
+routes.post(
     '/',
     [
         check('name', '\'name\' is required.').not().isEmpty(),
@@ -22,12 +22,12 @@ userRoutes.post(
         check('password', 'Please enter a password with 6 or more characters.')
             .isLength({ min: 6 }),
     ],
-    async (req: Request, res: Response) => {
-        const errors = validationResult(req);
+    async (request: Request, response: Response, next: (error: any)=>void) => {
+        const errors = validationResult(request);
         if (!errors.isEmpty()) {
             throw new ValidationFailure({ message: errors.array().join() });
         }
-        let { name, email, password } = req.body;
+        let { name, email, password } = request.body;
         try {
             const exists = await UserModel.exists({ email });
             if (exists) {
@@ -38,11 +38,10 @@ userRoutes.post(
             const user = new UserModel({ name, email, password, avatar, active: true });
             const doc = await user.save();
             const accessToken = await getAccessToken(doc.id);
-
-            return res.status(OK).send({ accessToken });
-        } catch (err) {
-            return err.send(res);
+            return response.status(CREATED).send({ accessToken });
+        } catch (error) {
+            return await sendError(error, response);
         }
     });
 
-export default userRoutes;
+export default routes;
