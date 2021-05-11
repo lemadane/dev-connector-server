@@ -23,7 +23,7 @@
     "gravatar": "^1.8.0",
     "helmet": "^3.22.0",
     "jsonwebtoken": "^8.5.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "mongoose": "^5.9.10",
     "morgan-body": "^2.4.13",
     "normalize-url": "^5.0.0",
